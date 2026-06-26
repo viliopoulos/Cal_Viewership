@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cal Football — TV Viewership Snapshot</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --navy:#0a1a33; --blue:#003262; --gold:#FDB515; --founders:#3B7EA1; --lawrence:#00B0DA;
+  --medalist:#C4820E; --ink:#13243a; --muted:#5e6b7b; --line:#e6eaf0;
+  --bg:#f5f7fa; --card:#ffffff; --softblue:#eef3f8; --softgold:#fff7e3;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+.serif{font-family:Georgia,"Times New Roman",serif}
+
+/* top bar */
+.topbar{position:sticky;top:0;z-index:60;background:var(--navy);color:#fff;border-bottom:3px solid var(--gold)}
+.topbar .wrap{display:flex;align-items:center;gap:14px;height:52px;overflow-x:auto}
+.topbar .brand{font-weight:800;letter-spacing:.3px;white-space:nowrap;font-size:14px}
+.topbar .brand b{color:var(--gold)}
+.topnav{display:flex;gap:1px;margin-left:auto}
+.topnav a{color:#c2d0e0;text-decoration:none;font-size:12px;font-weight:600;padding:6px 9px;border-radius:7px;white-space:nowrap}
+.topnav a:hover{background:rgba(255,255,255,.12);color:#fff}
+
+/* hero — echoes the deck cover (navy + gold, serif) */
+.hero{background:var(--navy);color:#fff;position:relative;overflow:hidden}
+.hero .wrap{position:relative;padding:52px 22px 44px;z-index:2}
+.hero:before{content:"";position:absolute;left:0;top:0;bottom:0;width:10px;background:var(--gold)}
+.hero .eyebrow{color:var(--gold);font-weight:700;font-size:12px;letter-spacing:2px;text-transform:uppercase}
+.hero h1{font-size:46px;line-height:1.04;margin:14px 0 12px;font-weight:400;letter-spacing:-.5px;max-width:760px}
+.hero p.sub{color:#c6d3e0;max-width:680px;font-size:15px}
+.hero .meta{color:#7f97af;font-size:12px;margin-top:16px}
+
+/* kpi row */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:26px}
+.kpi{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:14px}
+.kpi .v{font-size:25px;font-weight:800;color:#fff;line-height:1}
+.kpi .v small{font-size:13px;color:var(--gold);font-weight:700}
+.kpi .l{font-size:11px;color:#aebfd0;margin-top:7px;line-height:1.3}
+
+/* control bar */
+.controls{position:sticky;top:52px;z-index:55;background:#fff;border-bottom:1px solid var(--line);box-shadow:0 2px 6px rgba(16,40,70,.05)}
+.controls .wrap{display:flex;align-items:center;gap:18px;height:54px;flex-wrap:wrap}
+.ctl{display:flex;align-items:center;gap:9px}
+.ctl .lab{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#f2f5f8}
+.seg button{border:0;background:transparent;padding:7px 13px;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer}
+.seg button.on{background:var(--navy);color:#fff}
+.seg button:not(.on):hover{background:#e7edf3}
+.controls .hint{font-size:11.5px;color:var(--muted);margin-left:auto}
+
+/* sections */
+section{padding:38px 0;border-bottom:1px solid var(--line)}
+.eyebrow{color:var(--medalist);font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase}
+h2{font-size:22px;font-weight:800;margin:7px 0 5px;letter-spacing:-.2px}
+.lead{color:var(--muted);max-width:780px;font-size:14px;margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 14px;box-shadow:0 1px 3px rgba(16,40,70,.04)}
+.card + .card{margin-top:16px}
+.card h3{font-size:14.5px;font-weight:700;margin-bottom:3px}
+.card .note{font-size:12px;color:var(--muted);margin-bottom:12px}
+.reads{font-size:12.5px;color:var(--muted);margin-top:11px;padding-top:10px;border-top:1px dashed var(--line)}
+.reads b{color:var(--ink)}
+.chartbox{position:relative;width:100%}
+.tagrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tag{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--softblue);color:var(--blue)}
+.tag.g{background:var(--softgold);color:var(--medalist)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+
+.statrow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.stat{background:var(--softblue);border-radius:10px;padding:12px}
+.stat .v{font-size:20px;font-weight:800;color:var(--blue)}
+.stat .l{font-size:11px;color:var(--muted);margin-top:3px}
+
+.tier{border-radius:12px;padding:14px 15px;border:1px solid var(--line)}
+.tier h4{font-size:14px;margin-bottom:4px;display:flex;align-items:center;gap:7px}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line)}
+th{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700}
+tr.hl td{background:var(--softgold);font-weight:700}
+footer{padding:22px 0 46px;color:var(--muted);font-size:11.5px;text-align:center}
+
+@media(max-width:840px){
+  .kpis{grid-template-columns:repeat(2,1fr)} .grid2,.grid3{grid-template-columns:1fr}
+  .statrow{grid-template-columns:repeat(2,1fr)} .hero h1{font-size:32px}
+  .controls .wrap{height:auto;padding-top:8px;padding-bottom:8px}
+}
+@media print{.topbar,.controls{position:static} .hero{-webkit-print-color-adjust:exact;print-color-adjust:exact} section{break-inside:avoid}}
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="wrap">
+  <div class="brand">CAL ATHLETICS · <b>BUSINESS INTELLIGENCE</b></div>
+  <nav class="topnav">
+    <a href="#position">Positioning</a><a href="#basis">Basis</a><a href="#trend">Trend</a>
+    <a href="#gamelog">Game Log</a><a href="#windows">Windows</a><a href="#acc">ACC</a>
+    <a href="#national">National</a><a href="#digital">Digital</a><a href="#bayarea">Bay Area</a><a href="#outlook">2026</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">Cal Football · TV Viewership</div>
+  <h1 class="serif">Where Cal sits in the national TV picture</h1>
+  <p class="sub">An operational snapshot of Cal football's television audience versus its own history, ACC peers, and national brands — filter by season and venue.</p>
+  <div class="kpis">
+    <div class="kpi"><div class="v" id="kRank">#56<small>/131</small></div><div class="l">National rank, FBS avg viewership (<span id="kYr1">2025</span>)</div></div>
+    <div class="kpi"><div class="v" id="kAcc">13th<small>/17</small></div><div class="l">Among ACC programs (<span id="kYr2">2025</span>)</div></div>
+    <div class="kpi"><div class="v" id="kRated">815K</div><div class="l">Avg per nationally-rated Cal telecast (<span id="kYr3">2025</span>)</div></div>
+    <div class="kpi"><div class="v">1.16M</div><div class="l">Avg in the primetime (≥7pm PT) window, ACC era</div></div>
+    <div class="kpi"><div class="v">~10–16×</div><div class="l">Gap from Cal to the most-watched brand (Alabama)</div></div>
+  </div>
+  <div class="meta">Internal data + SportsMediaWatch, Nielsen/SBJ, FOS</div>
+</div></header>
+
+<div class="controls"><div class="wrap">
+  <div class="ctl"><span class="lab">Season</span>
+    <div class="seg" id="segSeason">
+      <button data-season="2024">2024</button>
+      <button data-season="2025" class="on">2025</button>
+      <button data-season="Both">Both</button>
+    </div>
+  </div>
+  <div class="ctl"><span class="lab">Venue</span>
+    <div class="seg" id="segVenue">
+      <button data-venue="home" class="on">Home</button>
+      <button data-venue="all">Home + Away</button>
+    </div>
+  </div>
+  <span class="hint">Filters drive the game log, window, network, ACC, national & digital charts.</span>
+</div></div>
+
+<main class="wrap">
+
+<!-- POSITIONING -->
+<section id="position">
+  <div class="eyebrow">Cal's Positioning</div>
+  <h2>Three facts that frame the picture</h2>
+  <div class="grid3">
+    <div class="tier" style="background:var(--softblue)">
+      <h4><span class="dot" style="background:var(--medalist)"></span>The gap is real</h4>
+      <p style="font-size:12.5px;color:#3a4a5c">Cal ranks <b>#56 of 131</b> FBS programs and <b>13th of 17</b> in the ACC by 2025 viewership. The super-league brands (Alabama ~8.5M, Texas/Georgia ~7.5M) draw <b>10–16× our audience</b>.</p>
+    </div>
+    <div class="tier" style="background:var(--softgold)">
+      <h4><span class="dot" style="background:var(--gold)"></span>The move added reach</h4>
+      <p style="font-size:12.5px;color:#5a4a16">In the Pac-12, most Cal home games sat on the Pac-12 Network with little national footprint. In the ACC, <b>8 games a year are nationally rated on ESPN/ESPN2</b> — and several clear 1M+.</p>
+    </div>
+    <div class="tier" style="background:#eef7ee">
+      <h4><span class="dot" style="background:#2e7d32"></span>We control real levers</h4>
+      <p style="font-size:12.5px;color:#234a25">The late <b>7:30pm PT (10:30 ET) window</b> is open on the West Coast — Cal averages <b>1.16M</b> there. Add a marquee 2026 home slate, a digital audience we own, and new energy & momentum for the football program.</p>
+    </div>
+  </div>
+  <div class="reads" style="border-top:0;margin-top:14px;font-size:13px">Cal is a regional TV property in a pro-dominated market, not a national brand — but it has a specific, winnable lane (the late window + marquee opponents + owned digital). The strategy is to maximize the controllables, by acknowledging the current brand gap.</div>
+</section>
+
+<!-- BASIS -->
+<section id="basis">
+  <div class="eyebrow">Reading the number</div>
+  <h2>Two ways to average a season</h2>
+  <p class="lead">National rankings count every scheduled game (games on non-rated networks score as zero). Per-telecast counts only measured national broadcasts. Both are shown so the comparison is apples-to-apples.</p>
+  <div class="grid2">
+    <div class="card">
+      <h3>Cal average, two bases — <span id="basisYr">2025</span></h3>
+      <div class="note">Toggle the season above to switch years.</div>
+      <div class="chartbox" style="height:230px"><canvas id="cBasis"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Position in the field</h3>
+      <div class="statrow" style="grid-template-columns:1fr 1fr">
+        <div class="stat"><div class="v" id="sNat">#56 / 131</div><div class="l">All of FBS (12-wk basis)</div></div>
+        <div class="stat"><div class="v" id="sAcc">13th / 17</div><div class="l">Within the ACC</div></div>
+        <div class="stat"><div class="v" id="sAccPct">51%</div><div class="l">Of the ACC average</div></div>
+        <div class="stat"><div class="v" id="sStan">≈ Stanford</div><div class="l">Cal vs Stanford, same year</div></div>
+      </div>
+      <div class="reads"><b id="basisRead">2025:</b> <span id="basisReadTxt">Cal 543K = #56 of 131 FBS and 13th of 17 in the ACC; Stanford 583K (#54). The 8 rated Cal telecasts averaged 815K.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- TREND -->
+<section id="trend">
+  <div class="eyebrow">Cal's own history · F22–F26</div>
+  <h2>Inventory, attendance & revenue by season</h2>
+  <p class="lead">2023 was Cal's last Pac-12 season (shown with *). These four charts use all seasons and are not affected by the filters above.</p>
+  <div class="card">
+    <h3>National TV inventory vs. audience per telecast</h3>
+    <div class="note">Bars = number of nationally-rated Cal telecasts. Line = avg audience per rated telecast. 2022–23 are small samples (most Pac-12 home games aired on the Pac-12 Network and were never nationally measured).</div>
+    <div class="chartbox" style="height:290px"><canvas id="cTrend"></canvas></div>
+    <div class="reads">Rated Cal telecasts per year: 3 → 2 → 8 → 8. Avg per rated telecast: 1.78M* → 1.25M* → 0.79M → 0.82M.</div>
+  </div>
+  <div class="grid2" style="margin-top:16px">
+    <div class="card">
+      <h3>Attendance & scan rate</h3>
+      <div class="note">Scan rate = attendance ÷ tickets distributed. F26 not yet played.</div>
+      <div class="chartbox" style="height:240px"><canvas id="cAtt"></canvas></div>
+      <div class="reads">Scan rate: 44% → 44% → 61% → 60%. Avg attendance: 17.0K → 14.5K → 24.7K → 20.9K.</div>
+    </div>
+    <div class="card">
+      <h3>Ticket revenue per game</h3>
+      <div class="note">F26 = booked to date (season not played).</div>
+      <div class="chartbox" style="height:240px"><canvas id="cRev"></canvas></div>
+      <div class="reads">Avg revenue/game: $539K → $581K → $856K → $416K → $155K booked. F26 total booked: $1.08M.</div>
+    </div>
+  </div>
+</section>
+
+<!-- GAME LOG -->
+<section id="gamelog">
+  <div class="eyebrow">Game-by-game · verified vs Nielsen / SportsMediaWatch</div>
+  <h2>Every Cal game, by audience</h2>
+  <p class="lead">Use the <b>Season</b> and <b>Venue</b> filters above. Colored bars = nationally-rated networks; grey bars = ACCN / ACCNX / CBSSN / ESPN+ (not Nielsen-rated; internal estimate where available, otherwise unmeasured).</p>
+  <div class="card">
+    <h3>Audience by game (000s) — <span id="glTitle">2025 · Home</span></h3>
+    <div class="note">Hover for network, window and venue.</div>
+    <div class="chartbox" id="glBox" style="height:430px"><canvas id="cGameLog"></canvas></div>
+    <div class="tagrow">
+      <span class="tag" style="background:#003262;color:#fff">ESPN</span>
+      <span class="tag" style="background:#3B7EA1;color:#fff">ESPN2</span>
+      <span class="tag" style="background:#00B0DA;color:#fff">CW</span>
+      <span class="tag" style="background:#c2cad3;color:#33414f">ACCN / CBSSN / ESPN+ (not rated)</span>
+    </div>
+  </div>
+</section>
+
+<!-- WINDOWS + NETWORK -->
+<section id="windows">
+  <div class="eyebrow">Network & kickoff window</div>
+  <h2>Where & when Cal airs</h2>
+  <p class="lead">Both charts respond to the Season and Venue filters. Window groups nationally-rated games by local kickoff.</p>
+  <div class="grid2">
+    <div class="card">
+      <h3>Avg audience by kickoff window</h3>
+      <div class="note">Rated games only; n shown per bar.</div>
+      <div class="chartbox" style="height:255px"><canvas id="cWindow"></canvas></div>
+      <div class="reads">ACC era, all rated games: Early &lt;3pm 483K (n=6) · Afternoon 745K (n=4) · Primetime ≥7pm 1.16M (n=6).</div>
+    </div>
+    <div class="card">
+      <h3>Cal telecasts by network</h3>
+      <div class="note">Count of games on each network for the current filter.</div>
+      <div class="chartbox" style="height:255px"><canvas id="cNet"></canvas></div>
+      <div class="reads">Across 2024–25, ~⅓ of Cal games (8 of 24) aired on non-Nielsen networks (ACCN/ACCNX/CBSSN/ESPN+).</div>
+    </div>
+  </div>
+</section>
+
+<!-- ACC -->
+<section id="acc">
+  <div class="eyebrow">ACC peers</div>
+  <h2>Cal in the ACC field</h2>
+  <p class="lead">Per-12-week average viewership. Set Season to <b>Both</b> to see 2024→2025 progression side by side. Cal in gold, Stanford in light blue.</p>
+  <div class="card">
+    <h3>ACC programs by average viewership (000s) — <span id="accTitle">2025</span></h3>
+    <div class="note">Bar order fixed by 2025 rank for easy comparison.</div>
+    <div class="chartbox" style="height:440px"><canvas id="cACC"></canvas></div>
+    <div class="reads">Cal: 2024 = 526K (9th of 17) → 2025 = 543K (13th of 17). The number rose slightly while peers (UNC, Virginia, Pitt, Syracuse) rose faster. ACC average grew 802K → 1.06M.</div>
+  </div>
+</section>
+
+<!-- NATIONAL -->
+<section id="national">
+  <div class="eyebrow">National brands</div>
+  <h2>Cal vs. the super-league</h2>
+  <p class="lead">Top brands plus the ACC average, Stanford and Cal on one axis. Set Season to <b>Both</b> for 2024 vs 2025.</p>
+  <div class="card">
+    <h3>Average viewership — top brands vs. Cal (000s) — <span id="natTitle">2025</span></h3>
+    <div class="note">Run It Back 12-week basis. Nielsen per-telecast figures run higher (e.g., Alabama ~8.5M, FSU ~4.1M).</div>
+    <div class="chartbox" style="height:440px"><canvas id="cNational"></canvas></div>
+    <div class="reads">FSU (best non-SEC/Big Ten) drew ~4–6× Cal. Cal 526K → 543K; the brand tiers that set media value sit far above.</div>
+  </div>
+</section>
+
+<!-- DIGITAL -->
+<section id="digital">
+  <div class="eyebrow">Owned audience</div>
+  <h2>TV audience vs. digital engagement</h2>
+  <p class="lead">Internal home-game data; responds to the Season filter (Both colors by year). Bubble size = impressions. Games on non-rated networks plot at x = 0.</p>
+  <div class="card">
+    <h3>TV audience vs. engagements (bubble = impressions) — <span id="engTitle">2025</span></h3>
+    <div class="note">2024 = gold, 2025 = navy.</div>
+    <div class="chartbox" style="height:340px"><canvas id="cEng"></canvas></div>
+    <div class="reads">Several non-rated games (e.g., F24 Stanford on ACCN: 124K engagements, 1.8M impressions) posted Cal's highest digital numbers — owned audience is not tied to the TV window.</div>
+  </div>
+</section>
+
+<!-- BAY AREA -->
+<section id="bayarea">
+  <div class="eyebrow">Market context · verified</div>
+  <h2>Cal in the Bay Area sports market</h2>
+  <p class="lead">Different properties are measured differently — labels note the basis. National broadcast averages where available; local RSN / streaming audiences for MLB, MLS & NWSL are not publicly reported and are marked N/A.</p>
+  <div class="card">
+    <h3>Typical national TV audience per game (000s, log scale)</h3>
+    <div class="note">49ers = NFL national; Warriors = NBA national broadcast average; Cal = mix of national + regional windows.</div>
+    <div class="chartbox" style="height:280px"><canvas id="cBay"></canvas></div>
+    <div class="grid3" style="margin-top:14px">
+      <div class="stat" style="background:#eef7ee"><div class="v">18,064</div><div class="l">Valkyries avg attendance (WNBA record, sold out all 22) — vs Cal's ~20,922 scanned</div></div>
+      <div class="stat" style="background:var(--softblue)"><div class="v">12,717</div><div class="l">Bay FC avg attendance (NWSL); record 40,091 at Oracle Park</div></div>
+      <div class="stat" style="background:var(--softgold)"><div class="v">N/A</div><div class="l">Giants, A's & Earthquakes local TV — RSN/streaming, not publicly reported</div></div>
+    </div>
+    <div class="reads">NFL averaged 18.7M/game in 2025; a 49ers national window (e.g., Week 18 vs Seattle) drew 27.5M. NBA national broadcasts averaged 1.56M in 2024–25.</div>
+  </div>
+</section>
+
+<!-- 2026 -->
+<section id="outlook">
+  <div class="eyebrow">2026 home slate</div>
+  <h2>Booked revenue & TV opportunity</h2>
+  <p class="lead">Forward-looking, from current ticket sales. Not affected by the season filter.</p>
+  <div class="grid2">
+    <div class="card">
+      <h3>2026 home revenue booked to date</h3>
+      <div class="note">$1.08M booked across 7 home games.</div>
+      <div class="chartbox" style="height:255px"><canvas id="cBooked"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>2026 home slate — window & TV opportunity</h3>
+      <table style="margin-top:2px">
+        <thead><tr><th>Game</th><th>Window</th><th>Opportunity</th></tr></thead>
+        <tbody>
+          <tr class="hl"><td>Clemson (Fri 9/25)</td><td>7:30 PT primetime</td><td>Showcase — national brand, open lane</td></tr>
+          <tr class="hl"><td>UCLA (9/5)</td><td>7:30 PT opener</td><td>Showcase — name brand, season kick</td></tr>
+          <tr><td>Stanford (Big Game)</td><td>TBD</td><td>Rivalry / top gate ($501K booked)</td></tr>
+          <tr><td>Virginia Tech · Pitt</td><td>TBD</td><td>Mid — window & record dependent</td></tr>
+          <tr><td>Wake Forest</td><td>TBD</td><td>Mid-low</td></tr>
+          <tr><td>Wagner (FCS)</td><td>TBD</td><td>Low</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+</main>
+<footer class="wrap">Cal Athletics · Business Intelligence — June 2026 · Data: internal dashboards + SportsMediaWatch, Nielsen/SBJ, FOS · figures rounded</footer>
+
+<script>
+const C={navy:'#0a1a33',blue:'#003262',gold:'#FDB515',founders:'#3B7EA1',lawrence:'#00B0DA',
+  medalist:'#C4820E',grey:'#c2cad3',ink:'#13243a',muted:'#5e6b7b',line:'#e6eaf0'};
+Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif";
+Chart.defaults.font.size=12; Chart.defaults.color=C.muted;
+const fmtK=v=>v>=1000?(v/1000).toFixed(2).replace(/\.?0+$/,'')+'M':Math.round(v)+'K';
+const netColor=n=>({'ESPN':C.blue,'ESPN2':C.founders,'CW':C.lawrence,'FOX':'#7a2048','FS1':'#9a6a1c',
+  'ACCN':C.grey,'ACCNX/ESPN+':C.grey,'CBSSN':C.grey}[n]||C.muted);
+const valLabels={id:'valLabels',afterDatasetsDraw(c){const{ctx}=c;c.data.datasets.forEach((ds,di)=>{
+  if(!ds._label)return;const meta=c.getDatasetMeta(di);meta.data.forEach((el,i)=>{const v=ds.data[i];
+  if(v==null||v===0)return;ctx.save();ctx.fillStyle=ds._labelColor||C.ink;ctx.font='700 11px sans-serif';
+  if(ds._horiz){ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(ds._fmt?ds._fmt(v):v,el.x+6,el.y);}
+  else{ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(ds._fmt?ds._fmt(v):v,el.x,el.y-4);}ctx.restore();});});}};
+
+/* ---------- DATA ---------- */
+const GAMES=[
+ {y:2024,v:'A',o:'Auburn',n:'ESPN2',pt:12.5,a:1120,r:1},
+ {y:2024,v:'H',o:'San Diego St.',n:'ESPN',pt:19.5,a:938,r:1},
+ {y:2024,v:'A',o:'Florida State',n:'ESPN2',pt:16,a:887,r:1},
+ {y:2024,v:'H',o:'Miami',n:'ESPN',pt:19.5,a:1916,r:1},
+ {y:2024,v:'A',o:'Pittsburgh',n:'ESPN',pt:12.5,a:741,r:1},
+ {y:2024,v:'H',o:'Oregon State',n:'ESPN2',pt:13,a:183,r:1},
+ {y:2024,v:'H',o:'Syracuse',n:'CW',pt:12,a:298,r:1},
+ {y:2024,v:'A',o:'SMU',n:'ESPN2',pt:12.5,a:228,r:1},
+ {y:2024,v:'H',o:'UC Davis',n:'ACCNX/ESPN+',pt:14,a:null,e:null,r:0},
+ {y:2024,v:'H',o:'NC State',n:'ACCN',pt:12.5,a:null,e:null,r:0},
+ {y:2024,v:'H',o:'Stanford',n:'ACCN',pt:12.5,a:null,e:null,r:0},
+ {y:2024,v:'A',o:'Wake Forest',n:'ACCN',pt:17,a:null,e:null,r:0},
+ {y:2025,v:'A',o:'Oregon State',n:'ESPN',pt:19.5,a:565,r:1},
+ {y:2025,v:'H',o:'Texas Southern',n:'ACCNX/ESPN+',pt:15,a:null,e:null,r:0},
+ {y:2025,v:'H',o:'Minnesota',n:'ESPN',pt:19.5,a:958,r:1},
+ {y:2025,v:'A',o:'San Diego St.',n:'CBSSN',pt:19.5,a:null,e:100,r:0},
+ {y:2025,v:'A',o:'Boston College',n:'ACCN',pt:12.5,a:null,e:93,r:0},
+ {y:2025,v:'H',o:'Duke',n:'ESPN',pt:19.5,a:1000,r:1},
+ {y:2025,v:'H',o:'North Carolina',n:'ESPN',pt:19.5,a:1580,r:1},
+ {y:2025,v:'H',o:'Virginia Tech',n:'ESPN',pt:16.5,a:1110,r:1},
+ {y:2025,v:'H',o:'Virginia',n:'ESPN2',pt:12.75,a:326,r:1},
+ {y:2025,v:'A',o:'Louisville',n:'ESPN2',pt:16,a:450,r:1},
+ {y:2025,v:'A',o:'Stanford',n:'ACCN',pt:16.5,a:null,e:106,r:0},
+ {y:2025,v:'H',o:'SMU',n:'ESPN2',pt:17,a:531,r:1}];
+const ENG={2024:[
+ {l:'Miami',tv:1916,eng:149221,imp:2867751},{l:'Stanford (ACCN, n/r)',tv:0,eng:124261,imp:1802859},
+ {l:'San Diego St.',tv:938,eng:63739,imp:1064075},{l:'Oregon State',tv:183,eng:49903,imp:885482},
+ {l:'UC Davis (ACCNX, n/r)',tv:0,eng:36208,imp:744184},{l:'NC State (ACCN, n/r)',tv:0,eng:32676,imp:651856},
+ {l:'Syracuse',tv:298,eng:18346,imp:310736}],
+ 2025:[{l:'SMU',tv:531,eng:26395,imp:1010874},{l:'Minnesota',tv:958,eng:21712,imp:714508},
+ {l:'Texas Southern (n/r)',tv:0,eng:18172,imp:841354},{l:'Duke',tv:1000,eng:6221,imp:718362},
+ {l:'North Carolina',tv:1580,eng:8048,imp:576179},{l:'Virginia',tv:326,eng:2445,imp:237064}]};
+const ACC=[['Miami',2401,3070],['Florida State',1640,2370],['Georgia Tech',1890,2060],['Clemson',1700,1940],
+ ['Pittsburgh',497,1070],['Syracuse',452,969],['North Carolina',328,952],['Virginia Tech',606,911],
+ ['Louisville',734,787],['Virginia',248,762],['Stanford',478,583],['NC State',557,551],['California',526,543],
+ ['Duke',359,512],['Wake Forest',292,431],['SMU',341,393],['Boston College',582,170]];
+const NAT=[['Alabama',5440,7010],['Georgia',5970,6170],['Texas',4630,5780],['Ohio State',5160,5680],
+ ['Oklahoma',2800,4910],['LSU',3580,4283],['Michigan',4010,4278],['Texas A&M',3370,3570],
+ ['Notre Dame',2510,3200],['Florida',3639,3130],['Miami',2401,3070],['Tennessee',3598,3060],
+ ['Oregon',2466,2960],['Penn State',2457,2720],['Florida State',1640,2370],['ACC average',802,1063],
+ ['Stanford',478,583],['California',526,543]];
+const KPI={'2024':{rank:'#58 / 133',acc:'9th / 17',rated:'789K',accpct:'66%',stan:'Cal 526K · Stan 478K'},
+           '2025':{rank:'#56 / 131',acc:'13th / 17',rated:'815K',accpct:'51%',stan:'Cal 543K · Stan 583K'}};
+const BASISREAD={'2024':'2024: Cal 526K = #58 of 133 FBS and 9th of 17 in the ACC; Stanford 478K. The 8 rated Cal telecasts averaged 789K.',
+ '2025':'2025: Cal 543K = #56 of 131 FBS and 13th of 17 in the ACC; Stanford 583K (#54). The 8 rated Cal telecasts averaged 815K.'};
+
+let state={season:'2025',venue:'home'};
+const yr=()=> state.season==='Both'?'2025':state.season;
+const CH={};
+
+/* ---------- static charts ---------- */
+new Chart(cTrend,{data:{labels:[['2022','Pac-12'],['2023','Pac-12*'],['2024','ACC'],['2025','ACC']],
+  datasets:[{type:'bar',label:'Nationally-rated telecasts',data:[3,2,8,8],backgroundColor:C.gold,borderRadius:6,yAxisID:'y1',order:2},
+   {type:'line',label:'Avg per rated telecast',data:[1779,1246,789,815],borderColor:C.blue,backgroundColor:C.blue,borderWidth:3,tension:.3,pointRadius:5,yAxisID:'y',order:1}]},
+  options:{plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>c.dataset.label+': '+(c.dataset.yAxisID==='y'?fmtK(c.raw):c.raw+' games')}}},
+  scales:{y:{position:'left',beginAtZero:true,title:{display:true,text:'Avg / rated game'},grid:{color:C.line},ticks:{callback:fmtK}},
+   y1:{position:'right',beginAtZero:true,max:10,title:{display:true,text:'# rated'},grid:{display:false}},x:{grid:{display:false}}}}});
+new Chart(cAtt,{data:{labels:['F22','F23','F24','F25'],datasets:[
+   {type:'bar',label:'Avg attendance',data:[16986,14505,24701,20922],backgroundColor:C.founders,borderRadius:6,yAxisID:'y'},
+   {type:'line',label:'Scan rate %',data:[44,44,61,60],borderColor:C.gold,backgroundColor:C.gold,borderWidth:3,pointRadius:4,tension:.3,yAxisID:'y1'}]},
+  options:{plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>c.dataset.yAxisID==='y1'?c.raw+'% scanned':c.raw.toLocaleString()+' avg'}}},
+  scales:{y:{beginAtZero:true,grid:{color:C.line},ticks:{callback:v=>(v/1000)+'K'}},y1:{position:'right',beginAtZero:true,max:100,grid:{display:false},ticks:{callback:v=>v+'%'}},x:{grid:{display:false}}}}});
+new Chart(cRev,{type:'bar',data:{labels:['F22','F23','F24','F25','F26*'],
+  datasets:[{data:[539,581,856,416,155],backgroundColor:['#3B7EA1','#3B7EA1','#003262','#3B7EA1','#FDB515'],borderRadius:6,_label:1,_fmt:v=>'$'+v+'K',_labelColor:C.ink}]},plugins:[valLabels],
+  options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'$'+c.raw+'K avg/game'+(c.label==='F26*'?' (booked)':'')}}},
+  scales:{y:{beginAtZero:true,grid:{color:C.line},ticks:{callback:v=>'$'+v+'K'}},x:{grid:{display:false}}}}});
+new Chart(cBay,{type:'bar',data:{labels:['SF 49ers — NFL national','Warriors — NBA national','Cal FB — marquee (Miami ’24)','Cal FB — primetime avg','Cal FB — 2025 blend'],
+  datasets:[{data:[20000,1560,1916,1160,543],backgroundColor:['#0a1a33','#0a1a33','#FDB515','#FDB515','#FDB515'],borderRadius:5,_label:1,_horiz:1,_fmt:fmtK,_labelColor:C.muted}]},plugins:[valLabels],
+  options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtK(c.raw)+' per game'}}},
+  scales:{x:{type:'logarithmic',min:300,max:40000,grid:{color:C.line},ticks:{callback:v=>[500,1000,5000,10000].includes(v)?fmtK(v):''}},y:{grid:{display:false},ticks:{font:{size:11}}}}}});
+new Chart(cBooked,{type:'bar',data:{labels:['Stanford','UCLA','Clemson','Virginia Tech','Wake Forest','Wagner','Pitt'],
+  datasets:[{data:[501,310,131,84,33,13,9],backgroundColor:['#FDB515','#FDB515','#FDB515','#3B7EA1','#3B7EA1','#3B7EA1','#3B7EA1'],borderRadius:5,_label:1,_horiz:1,_fmt:v=>'$'+v+'K',_labelColor:C.muted}]},plugins:[valLabels],
+  options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'$'+c.raw+'K booked'}}},
+  scales:{x:{beginAtZero:true,grid:{color:C.line},ticks:{callback:v=>'$'+v+'K'},suggestedMax:620},y:{grid:{display:false}}}}});
+
+/* ---------- dynamic charts ---------- */
+CH.basis=new Chart(cBasis,{type:'bar',data:{labels:[['Per rated','telecast'],['National rank','basis (÷12)']],
+  datasets:[{data:[815,543],backgroundColor:[C.blue,C.gold],borderRadius:7,_label:1,_fmt:fmtK,_labelColor:C.ink}]},plugins:[valLabels],
+  options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtK(c.raw)+' avg'}}},
+  scales:{y:{beginAtZero:true,grid:{color:C.line},ticks:{callback:fmtK}},x:{grid:{display:false}}}}});
+
+CH.gl=new Chart(cGameLog,{type:'bar',data:{labels:[],datasets:[{data:[],backgroundColor:[],borderRadius:5,_label:1,_horiz:1,_fmt:fmtK,_labelColor:C.muted}]},plugins:[valLabels],
+  options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const g=CH.gl.$meta[c.dataIndex];
+    return [(g.r?fmtK(g.a):(g.e?'~'+g.e+'K (est)':'not measured'))+'  ·  '+g.n,(g.v==='H'?'Home':'Away')+'  ·  '+g.y+'  ·  '+winName(g.pt)];}}}},
+  scales:{x:{beginAtZero:true,grid:{color:C.line},ticks:{callback:fmtK},suggestedMax:1750},y:{grid:{display:false},ticks:{font:{size:11}}}}}});
+
+CH.win=new Chart(cWindow,{type:'bar',data:{labels:[],datasets:[{data:[],backgroundColor:[C.grey,C.founders,C.gold],borderRadius:7,_label:1,_fmt:fmtK,_labelColor:C.ink}]},plugins:[valLabels],
+  options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtK(c.raw)+' avg'}}},
+  scales:{y:{beginAtZero:true,grid:{color:C.line},ticks:{callback:fmtK}},x:{grid:{display:false}}}}});
+
+CH.net=new Chart(cNet,{type:'bar',data:{labels:[],datasets:[{data:[],backgroundColor:[],borderRadius:6,_label:1,_labelColor:C.ink}]},plugins:[valLabels],
+  options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const n=CH.net.$labels[c.dataIndex];return c.raw+' telecasts'+(['ACCN','ACCNX/ESPN+','CBSSN'].includes(n)?' · not rated':'');}}}},
+  scales:{y:{beginAtZero:true,grid:{color:C.line},ticks:{stepSize:2}},x:{grid:{display:false}}}}});
+
+CH.eng=new Chart(cEng,{type:'bubble',data:{datasets:[{data:[],backgroundColor:[],borderColor:[]}]},
+  options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const d=c.raw;return [d._l+' ('+d._y+')','TV: '+(d.x?fmtK(d.x):'not rated'),'Engagements: '+d.y.toLocaleString(),'Impressions: '+d._i.toLocaleString()];}}}},
+  scales:{x:{suggestedMin:0,suggestedMax:2050,title:{display:true,text:'TV audience (000s) — 0 = non-rated network'},grid:{color:C.line},ticks:{callback:v=>v?fmtK(v):'n/r'}},
+   y:{title:{display:true,text:'Digital engagements'},grid:{color:C.line},ticks:{callback:v=>(v/1000)+'K'}}}}});
+
+const accColor=t=>t==='California'?C.gold:(t==='Stanford'?C.lawrence:C.blue);
+const natColor=t=>t==='California'?C.gold:(t==='Stanford'?C.lawrence:(t==='ACC average'?C.medalist:C.blue));
+CH.acc=new Chart(cACC,{type:'bar',data:{labels:[],datasets:[]},
+  options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>(c.dataset.label?c.dataset.label+': ':'')+fmtK(c.raw)}}},
+  scales:{x:{beginAtZero:true,grid:{color:C.line},ticks:{callback:fmtK},suggestedMax:3550},y:{grid:{display:false},ticks:{font:{size:11}}}}}});
+CH.nat=new Chart(cNational,{type:'bar',data:{labels:[],datasets:[]},
+  options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>(c.dataset.label?c.dataset.label+': ':'')+fmtK(c.raw)}}},
+  scales:{x:{beginAtZero:true,grid:{color:C.line},ticks:{callback:fmtK},suggestedMax:8200},y:{grid:{display:false},ticks:{font:{size:10.5}}}}}});
+
+/* ---------- renderers ---------- */
+function winName(pt){return pt<15?'Early <3pm PT':(pt<19?'Afternoon 3–7pm PT':'Primetime ≥7pm PT');}
+function fg(){return GAMES.filter(g=>(state.season==='Both'||g.y==+state.season)&&(state.venue==='all'||g.v==='H'));}
+
+function renderGameLog(){
+  const gs=fg().map(g=>({...g,val:g.a!=null?g.a:(g.e!=null?g.e:0)})).sort((a,b)=>b.val-a.val);
+  CH.gl.$meta=gs;
+  document.getElementById('glBox').style.height=Math.max(240,gs.length*26+54)+'px';
+  CH.gl.data.labels=gs.map(g=>(g.v==='A'?'@ ':'')+g.o+(state.season==='Both'?" '"+String(g.y).slice(2):''));
+  CH.gl.data.datasets[0].data=gs.map(g=>g.val);
+  CH.gl.data.datasets[0].backgroundColor=gs.map(g=>g.r?netColor(g.n):C.grey);
+  CH.gl.resize();CH.gl.update();
+  document.getElementById('glTitle').textContent=(state.season==='Both'?'2024 + 2025':state.season)+' · '+(state.venue==='all'?'Home + Away':'Home');
+}
+function renderWindow(){
+  const rated=fg().filter(g=>g.r);const b={E:[],A:[],P:[]};
+  rated.forEach(g=>{(g.pt<15?b.E:(g.pt<19?b.A:b.P)).push(g.a);});
+  const m=a=>a.length?Math.round(a.reduce((s,x)=>s+x,0)/a.length):0;
+  CH.win.data.labels=[['Early','<3pm (n='+b.E.length+')'],['Afternoon','3–7pm (n='+b.A.length+')'],['Primetime','≥7pm (n='+b.P.length+')']];
+  CH.win.data.datasets[0].data=[m(b.E),m(b.A),m(b.P)];CH.win.update();
+}
+function renderNet(){
+  const cnt={};fg().forEach(g=>{cnt[g.n]=(cnt[g.n]||0)+1;});
+  const order=['ESPN','ESPN2','ACCN','ACCNX/ESPN+','CBSSN','CW'].filter(n=>cnt[n]);
+  CH.net.$labels=order;
+  CH.net.data.labels=order.map(n=>n==='ACCNX/ESPN+'?['ACCNX/','ESPN+']:n);
+  CH.net.data.datasets[0].data=order.map(n=>cnt[n]);
+  CH.net.data.datasets[0].backgroundColor=order.map(n=>['ACCN','ACCNX/ESPN+','CBSSN'].includes(n)?C.grey:netColor(n));
+  CH.net.update();
+}
+function renderEng(){
+  const yrs=state.season==='Both'?[2024,2025]:[+state.season];const pts=[],bg=[];
+  yrs.forEach(y=>ENG[y].forEach(e=>{pts.push({x:e.tv||0,y:e.eng,r:Math.max(6,Math.sqrt(e.imp)/70),_l:e.l,_i:e.imp,_y:y});bg.push((y===2025?C.blue:C.medalist)+'cc');}));
+  CH.eng.data.datasets[0].data=pts;CH.eng.data.datasets[0].backgroundColor=bg;CH.eng.update();
+  document.getElementById('engTitle').textContent=state.season==='Both'?'2024 + 2025':state.season;
+}
+function renderRank(chart,arr,colorFn,titleId){
+  if(state.season==='Both'){
+    chart.data.labels=arr.map(x=>x[0]);
+    chart.data.datasets=[{label:'2024',data:arr.map(x=>x[1]),backgroundColor:C.grey,borderRadius:4},
+      {label:'2025',data:arr.map(x=>x[2]),backgroundColor:arr.map(x=>colorFn(x[0])),borderRadius:4}];
+  }else{
+    const i=state.season==='2024'?1:2;
+    chart.data.labels=arr.map(x=>x[0]);
+    chart.data.datasets=[{data:arr.map(x=>x[i]),backgroundColor:arr.map(x=>colorFn(x[0])),borderRadius:5,_label:1,_horiz:1,_fmt:fmtK,_labelColor:C.muted}];
+  }
+  chart.options.plugins.legend.display=(state.season==='Both');
+  chart.options.plugins.legend.position='bottom';
+  chart.update();
+  document.getElementById(titleId).textContent=state.season==='Both'?'2024 vs 2025':state.season;
+}
+function renderBasis(){
+  const s=yr();CH.basis.data.datasets[0].data=s==='2024'?[789,526]:[815,543];CH.basis.update();
+  document.getElementById('basisYr').textContent=state.season==='Both'?'2025':s;
+  document.getElementById('basisReadTxt').textContent=BASISREAD[s];
+}
+function renderKPI(){
+  const s=yr();const k=KPI[s];
+  const sp=(t)=>{const p=t.split(' / ');return p[0]+'<small>/'+p[1]+'</small>';};
+  document.getElementById('kRank').innerHTML=sp(k.rank);
+  document.getElementById('kAcc').innerHTML=sp(k.acc);
+  document.getElementById('kRated').textContent=k.rated;
+  document.getElementById('sNat').textContent=k.rank;
+  document.getElementById('sAcc').textContent=k.acc;
+  document.getElementById('sAccPct').textContent=k.accpct;
+  document.getElementById('sStan').textContent=(s==='2024'?'9th vs 11th':'13th vs 11th');
+  ['kYr1','kYr2','kYr3'].forEach(id=>document.getElementById(id).textContent=state.season==='Both'?'2025':s);
+}
+function renderAll(){renderKPI();renderBasis();renderGameLog();renderWindow();renderNet();renderEng();
+  renderRank(CH.acc,ACC,accColor,'accTitle');renderRank(CH.nat,NAT,natColor,'natTitle');}
+
+document.getElementById('segSeason').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  state.season=b.dataset.season;[...e.currentTarget.children].forEach(x=>x.classList.toggle('on',x===b));renderAll();});
+document.getElementById('segVenue').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  state.venue=b.dataset.venue;[...e.currentTarget.children].forEach(x=>x.classList.toggle('on',x===b));
+  renderGameLog();renderWindow();renderNet();});
+
+renderAll();
+</script>
+</body>
+</html>
