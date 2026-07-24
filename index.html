@@ -86,6 +86,20 @@ th{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--mut
 tr.hl td{background:var(--softgold);font-weight:700}
 footer{padding:22px 0 46px;color:var(--muted);font-size:11.5px;text-align:center}
 
+/* password gate */
+#gate{position:fixed;inset:0;z-index:9999;background:var(--navy);display:flex;align-items:center;justify-content:center;padding:20px}
+#gate:before{content:"";position:absolute;left:0;top:0;bottom:0;width:10px;background:var(--gold)}
+.gate-card{position:relative;background:#0f2543;border:1px solid rgba(255,255,255,.12);border-top:4px solid var(--gold);border-radius:16px;padding:34px 30px;max-width:390px;width:100%;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.45)}
+.gate-brand{font-size:12px;font-weight:800;letter-spacing:.4px;color:#fff}
+.gate-brand b{color:var(--gold)}
+.gate-card h2{color:#fff;font-size:21px;margin:18px 0 6px;font-weight:800}
+.gate-card p{color:#c6d3e0;font-size:13px;margin-bottom:18px}
+#gatePw{width:100%;padding:12px 14px;border-radius:9px;border:1px solid rgba(255,255,255,.22);background:#0a1a33;color:#fff;font-size:14px;outline:none}
+#gatePw:focus{border-color:var(--gold)}
+#gateBtn{width:100%;margin-top:12px;padding:12px;border:0;border-radius:9px;background:var(--gold);color:#0a1a33;font-weight:800;font-size:14px;cursor:pointer}
+#gateBtn:hover{filter:brightness(1.06)}
+#gateErr{display:none;color:#ffb4b4;font-size:12.5px;margin-top:12px}
+
 @media(max-width:840px){
   .kpis{grid-template-columns:repeat(2,1fr)} .grid2,.grid3{grid-template-columns:1fr}
   .statrow{grid-template-columns:repeat(2,1fr)} .hero h1{font-size:32px}
@@ -95,6 +109,31 @@ footer{padding:22px 0 46px;color:var(--muted);font-size:11.5px;text-align:center
 </style>
 </head>
 <body>
+
+<div id="gate">
+  <div class="gate-card">
+    <div class="gate-brand">CAL ATHLETICS · <b>BUSINESS INTELLIGENCE</b></div>
+    <h2>Protected dashboard</h2>
+    <p>Enter the password to view the viewership snapshot.</p>
+    <input id="gatePw" type="password" placeholder="Password" autocomplete="off" autofocus>
+    <button id="gateBtn">View dashboard</button>
+    <div id="gateErr">Incorrect password — try again.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var PW="gobears1!";
+  var g=document.getElementById('gate');
+  document.documentElement.style.overflow='hidden';
+  function unlock(){g.style.display='none';document.documentElement.style.overflow='';try{sessionStorage.setItem('cal_ok','1');}catch(e){}}
+  try{if(sessionStorage.getItem('cal_ok')==='1')unlock();}catch(e){}
+  function tryPw(){var i=document.getElementById('gatePw');
+    if(i.value===PW){unlock();}
+    else{document.getElementById('gateErr').style.display='block';i.value='';i.focus();}}
+  document.getElementById('gateBtn').addEventListener('click',tryPw);
+  document.getElementById('gatePw').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();tryPw();}});
+})();
+</script>
 
 <div class="topbar"><div class="wrap">
   <div class="brand">CAL ATHLETICS · <b>BUSINESS INTELLIGENCE</b></div>
